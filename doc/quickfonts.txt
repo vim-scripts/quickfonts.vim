@@ -19,7 +19,8 @@ vim start up, the file is read, if it doesn't exist your list will be empty.
 On vim quit, your list of favorites is written to the file.  Commands are
 supplied to completely manage this font list, but you can also edit the font
 list with vim, in which case, when you save, your list will automatically be
-reloaded from the saved file.
+reloaded from the saved file.  The last used font (when vim last quit) can
+optionally be auto-load on vim (gui) start-up.
 
 ==============================================================================
 1. CONTENTS						*quickfonts-contents*
@@ -39,12 +40,13 @@ reloaded from the saved file.
 2. QUICKFONTS INSTALLATION				*quickfonts-install*
 
 To install, un-gzip the package, then untar in your $HOME/.vim or $VIMRUNTIME
-directory.
+directory.  To have this documentation file available from the vim help
+system, see |:helptabs|.
 
 ==============================================================================
 3. QUICKFONTS CONFIGURATION				*quickfonts-config*
 
-There are two configuration variables available with this plugin:
+There are four configuration variables available with this plugin:
 
 Favorite font file					*quickFontsFile*
 
@@ -55,6 +57,21 @@ default font file locatin is "$HOME/_vimquickfonts" on Windows machines and
 want to have this file saved at C:_vimquickfonts, make sure you have a $HOME
 environment variable or use the 'quickFontsFile' variable to sepecify another
 file.
+
+Auto-load last used font 				*quickFontsAutoLoad*
+
+If this variable is set (for instances, in your .vimrc file), the script will
+attmept to load the last font you used (from your favorites list) when vim
+starts up in GUI mode.  As of this version, the last used file is saved to the
+font file.  This version will read older font files, but the new format saved
+with this version will not work with older version of this script.
+
+Disable creation of mappings				*quickFontsNoMappings*
+
+If you do not like the mappings I set with this script, set the
+quickFontsNoMappings global variable and they will not be created. See
+|quickfonts-switching| for info about the default mappings and instructions
+for creating you own.
 
 Disable use of xwininfo					*quickFontsNoXwininfo*
 							*quickfonts-xwininfo*
