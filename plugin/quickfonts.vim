@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2003/01/24 19:15:42 $
+" Last Change: $Date: 2003/01/25 19:25:14 $
 " Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.20 $
+" Version: $Revision: 1.21 $
 "
 " For full user info, see quickfonts.txt
 " Key user info:
@@ -12,9 +12,10 @@
 "
 " Globals Config Variables:  read-only unless noted, only used on startup
 "   g:quickFontsFile         - file to use to read and save font info
+"   g:quickFontsNoMappings   - disable default mappings
+"   g:quickFontsNoMenu       - disable menu creation
 "   g:quickFontsNoXwininfo   - disable calling xininfo (for unix)
 "   g:quickFontsAutoLoad     - auto load last used font on gui startup
-"   g:quickFontsNoMappings   - disable default mappings
 "   g:quickfonts_loaded      - used to avoid multiple loading (read-write)
 "
 " Commands:
@@ -29,6 +30,8 @@
 " Mappings: disable (and do your own) with g:quickFontsNoMappings
 "   Alt>                        - QuickFontBigger
 "   Alt<                        - QuickFontSmaller
+"
+" Menus: most functionality in menus unless g:quickFontsNoMenu is defined
 "
 " Other:
 "   fonts are read from the font file at vim start
@@ -48,16 +51,18 @@ let quickfonts_loaded = 1
 " s:fnum         - number of fonts in list
 " s:fsa          - font size array, used s:fsa{i}
 " s:fwa          - font width array, used s:fwa{i}
-" s:listchanged  - whether list has changed - if 1, list is saved on exit
-" s:noxw         - whether we should not use `xwininfo` for geometry
-" s:save_cpo     - to restore settings
+" s:save         - whether font list has changed, flag to save one exit
+" s:maps         - whether we should create mappings
+" s:menu         - whether we should create/update menus
+" s:xwin         - whether we should use `xwininfo` for geometry
+" s:scpo         - to restore settings
 " s:selfont      - selected font index
 " s:var_{key}    - font file settings
 " s:winsys       - type of system we'll be dealing with
 
 
 """ save settings
-let s:save_cpo = &cpo | set cpo&vim
+let s:scpo = &cpo | set cpo&vim
 
 """ determine system type
 if has("unix")
@@ -75,7 +80,9 @@ let tfileUnknown  = $HOME . "/.vimquickfonts"
 
 """ config from global variables
 let s:file = (exists ("g:quickFontsFile") ? g:quickFontsFile : tfile{s:winsys})
-let s:noxw = (exists ("g:quickFontsNoXwininfo") ? 1 : 0)
+let s:maps = (exists ("g:quickFontsNoMappings") ? 0 : 1)
+let s:menu = (exists ("g:quickFontsNoMenu") ? 0 : 1)
+let s:xwin = (exists ("g:quickFontsNoXwininfo") ? 0 : 1)
 let s:auto = (exists ("g:quickFontsAutoLoad") ? 1 : 0)
 
 unlet tfileWindows tfileXwindows tfileUnknown
@@ -94,7 +101,7 @@ command! -n=1 QuickFontSet :call s:QuickFontSet(<f-args>)
 command! -n=0 QuickFontReload :call s:LoadFonts(0)
 
 """ global mappings
-if !exists ("g:quickFontsNoMappings")
+if s:maps
 	if exists ("quickfonts_debug") " so unique doesn't break
 		nmap <A->> :QuickFontBigger<CR>
 		nmap <A-<> :QuickFontSmaller<CR>
@@ -128,6 +135,9 @@ function! s:LoadFonts(setfont)
 		let s:selfont = s:fnum - 1
 	endif
 
+	if s:menu
+		call s:BuildFontMenus()
+	endif
 endfunction
 
 """ utility to load file into string
@@ -143,7 +153,7 @@ endfunction
 function! s:ReadFonts(str)
 	let fonts = a:str
 	let s:fnum = 0
-	let s:listchanged = 0
+	let s:save = 0
 	while strlen (fonts) > 0
 		let curfont = substitute (fonts, "\n.*", "", "")
 		let fonts = substitute (fonts, "[^\n]*\n", "" , "")
@@ -160,7 +170,7 @@ endfunction
 
 "" write fonts to config file
 function! s:ScriptFinish()
-	if s:listchanged == 0 && s:auto == 0
+	if s:save == 0 && s:auto == 0
 		return
 	endif
 	let fonts = ""
@@ -248,8 +258,12 @@ function! s:QuickFontAdd(...)
 	let s:fwa{cnt} = width
 	let s:fna{cnt} = newfont
 	let s:fnum = s:fnum + 1
-	let s:listchanged = 1
-		
+	let s:save = 1
+
+	if s:menu
+		call s:BuildFontMenus()
+	endif
+
 endfunction
 
 "" remove passed in font num or current selected font
@@ -281,7 +295,10 @@ function! s:QuickFontDel(...)
 		call <SID>QuickFontBigger ()
 	endif
 
-	let s:listchanged = 1
+	let s:save = 1
+	if s:menu
+		call s:BuildFontMenus()
+	endif
 endfunction
 
 "" switch to bigger font
@@ -329,7 +346,7 @@ endfunction
 	
 "" get X windows font geometry (unix only)
 function! s:GetGeomXwindows(newfont)
-	if s:noxw == 0
+	if s:xwin
 		let save_ts = &titlestring
 		let save_t = &title
 		let temp_title = tempname()
@@ -377,6 +394,53 @@ function! s:GetGeomUnknown(newfont)
 	return '0:0'
 endfunction
 
+function s:QFA_Helper()
+	let nf = input ("Enter font name> ")
+
+	if strlen (nf) == 0
+		return
+	else
+		call s:QuickFontAdd(nf)
+	endif
+endfunction
+
+function! s:Helper(prom, cmd)
+	let in=input(a:prom)
+	if strlen (in) == 0
+		return
+	endif
+	execute ":" . a:cmd . " " . in
+endfunction
+
+" create menus
+if s:menu
+	menu .10 &QuickFonts.&Smaller      :QuickFontSmaller<cr>
+	menu .20 &QuickFonts.&Bigger       :QuickFontBigger<cr>
+	menu .30 &QuickFonts.S&et           :
+	menu .40 &QuickFonts.&Info         :QuickFontInfo<cr>
+	menu .50 &QuickFonts.&Add.&Current :QuickFontAdd<cr>
+	menu     &QuickFonts.&Add.&Specify :QuickFontAdd *<cr>
+	menu .60 &QuickFonts.&Del.&Current :QuickFontDel<cr>
+	menu     &QuickFonts.&Del.&Specify :call <SID>Helper("DELETE: Font Number> ",
+				\ "QuickFontDel")<cr>
+	menu .70 &QuickFonts.&Reload       :QuickFontReload<cr>
+endif
+
+"""  utility to build font specific menus
+function! s:BuildFontMenus()
+	unmenu QuickFonts.Set
+	let cnt = 0
+	let mencmd1 = "menu .30 &QuickFonts.S&et.&"
+	let mencmd2 = "menu .30 &QuickFonts.S&et.&"
+	while cnt < s:fnum
+		let cmd = ((cnt < 10) ? mencmd1 : mencmd2)
+		let cmd = cmd . cnt . escape(s:fna{cnt}, '. ')
+		let cmd = cmd . " :QuickFontSet " . cnt .  "<cr>"
+		execute cmd
+		let cnt = cnt + 1
+	endwhile
+endfunction
+
 " first time load
 call s:LoadFonts (1)
 if s:auto == 1 && exists("s:var_LASTFONT")
@@ -386,4 +450,4 @@ if s:auto == 1 && exists("s:var_LASTFONT")
 	endif
 endif
 
-let &cpo = s:save_cpo " restore vim settings
+let &cpo = s:scpo " restore vim settings

@@ -29,12 +29,13 @@ optionally be auto-load on vim (gui) start-up.
 	1. CONTENTS......................: |quickfonts-contents|
 	2. QUICKFONTS INSTALLATION ......: |quickfonts-install|
 	3. QUICKFONTS CONFIGURATION .....: |quickfonts-config|
-	4. QUICKFONTS USAGE..............: |quickfonts-usage|
+	4. QUICKFONTS COMMANDS ..........: |quickfonts-commands|
 	     SWITCHING FONTS ............: |quickfonts-switching|
 	     FONTS INFORMATION ..........: |quickfonts-info|
 	     ADDING A FONT ..............: |quickfonts-add|
 	     DELETING A FONT ............: |quickfonts-delete|
 	     RELOADING THE LIST .........: |quickfonts-reload|
+	5. QUICKFONTS MENUS..............: |quickfonts-menus|
 
 ==============================================================================
 2. QUICKFONTS INSTALLATION				*quickfonts-install*
@@ -46,7 +47,7 @@ system, see |:helptabs|.
 ==============================================================================
 3. QUICKFONTS CONFIGURATION				*quickfonts-config*
 
-There are four configuration variables available with this plugin:
+There are five configuration variables available with this plugin:
 
 Favorite font file					*quickFontsFile*
 
@@ -73,6 +74,8 @@ quickFontsNoMappings global variable and they will not be created. See
 |quickfonts-switching| for info about the default mappings and instructions
 for creating you own.
 
+Disable creation of menus				*quickFontsNoMenu* 
+
 Disable use of xwininfo					*quickFontsNoXwininfo*
 							*quickfonts-xwininfo*
 
@@ -86,7 +89,8 @@ to do this include the fact this system call can be slow on some systems, or
 might not even be available on others.
 
 ==============================================================================
-4. QUICKFONTS USAGE					*quickfonts-usage*
+4. QUICKFONTS COMMANDS					*quickfonts-commands*
+							*quickfonts-usage*
 
 SWITCHING FONTS						*quickfonts-switching*
 							*QuickFontSmaller*
@@ -199,5 +203,33 @@ list file, you can use the command:
 
 To reload the file, discard your changes, and ensure the file won't be
 overwritten.
+
+5. QUICKFONTS MENUS					*quickfonts-menus*
+
+Unless explicitly diabled, QuickFonts will create menus with most of the
+functionality available from the commands (see above).  To diable menu
+creation, you must let the global variable |quickFontsNoMenu| before this
+plugin is loaded.  For example, to disable the menus, put this line in your
+.vimrc or _vimrc:
+
+ :let quickFontsNoMenu = 1
+
+There are 7 main menu areas:
+
+  Quickfonts -> Smaller       switch to smaller font |QuickFontSmaller|
+  Quickfonts -> Bigger        switch to bigger font |QuickFontBigger|
+  Quickfonts -> Set           see |QuickfontSet|
+     1 font 1 name            set font to displayed font name
+     2 font 2 name            set font to displayed font name
+     ...
+     n font n name            set font to displayed font name
+  Quickfonts -> Info          display font info |QuickFontInfo|
+  QuickFont -> Add            see |QuickFontAdd|
+     Current                  adds current font
+     Specify                  adds font from font selector
+  QuickFont -> Del            see |QuickFontDel|
+     Current                  deletes current font
+     Current                  deletes user specified font (by number)
+  QuickFont -> Reload         reloads fonts from font file |QuickFontReload|
 
 vim:tw=78:ts=8:ft=help
