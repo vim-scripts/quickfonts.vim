@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2002/04/19 19:07:57 $
+" Last Change: $Date: 2002/04/21 16:10:00 $
 " Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.16 $
+" Version: $Revision: 1.17 $
 
 if exists("quickfonts_loaded") && ! exists ("quickfonts_debug")
 	finish
@@ -126,14 +126,18 @@ function! s:QuickFontInfo()
 	endwhile
 endfunction
 
-"" s:QuickFontAdd - add current font or font selector if arg is '*'
+"" s:QuickFontAdd - add current font, argument font,  or font selector if arg is '*'
 function! s:QuickFontAdd(...)
-	if a:0 > 0 && a:1 == '*'
+	if a:0 > 0
 		let prevfont = &guifont
-		set guifont=*
-		if prevfont == &guifont
-			echo "QuickFontAdd: new font not selected"
-			return
+		if a:1 == '*'
+			set guifont=*
+			if prevfont == &guifont
+				echo "QuickFontAdd: new font not selected"
+				return
+			endif
+		else
+			execute "set guifont=" . a:1
 		endif
 	endif
 	let newfont = &guifont
@@ -250,7 +254,9 @@ function! s:QuickFontSet(fn)
 		return
 	endif
 
-	let newfont = s:fna{a:fn}
+	let s:selfont = a:fn
+
+	let newfont = s:fna{s:selfont}
   execute "set guifont=" . escape (newfont, " ")
 	redraw
 	echo "QuickFontSet: " . newfont

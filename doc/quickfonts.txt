@@ -134,19 +134,22 @@ the font name.
 ADDING A FONT						*quickfonts-add*
 							*QuickFontAdd*
 
-You can add a font to your favorites list with the command:
+You can add a font to your favorites list with these variants of the
+QuickFontAdd command:
 
+:QuickFontAdd font_name
 :QuickFontAdd *
-
-or
-
 :QuickFontAdd
 
-The first form opens the gui font selection dialog (if available for your
+The first form adds a font by name, for example:
+
+:QuickFontAdd -misc-fixed-medium-*-*-*-16-*-*-*-*-*-*-*
+
+The second form opens the gui font selection dialog (if available for your
 gui). Once you select a font from there, and there are no errors, that font
 will be added to the list.
 
-The second form adds the current value of the |'guifont'| setting.  If this is
+The third form adds the current value of the |'guifont'| setting.  If this is
 setting is empty or '*', you won't add anything.  In that case, you can use
 the first form or set your 'guifont' independently with ":set guifont=*", for
 example.
