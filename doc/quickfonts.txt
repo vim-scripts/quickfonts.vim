@@ -92,7 +92,7 @@ Disable use of xwininfo					*quickFontsNoXwininfo*
 
 On X-based systems (Unix and others), the fonts are sorted with the help of
 the external program 'xwininfo'.  This allows the font height and width to be
-calculated, and is used because of I know of know way to do it entirely within
+calculated, and is used because of I know of no way to do it entirely within
 vim.  If you don't want this program to be called, and instead would rather
 just sort on the font width (much less pleasing results, IMHO), you can define
 this variable in your vimrc to disable this feature.  Reasons you might want
@@ -217,8 +217,8 @@ overwritten.
 
 5. QUICKFONTS MENUS					*quickfonts-menus*
 
-Unless explicitly diabled, QuickFonts will create menus with most of the
-functionality available from the commands (see above).  To diable menu
+Unless explicitly disabled, QuickFonts will create menus with most of the
+functionality available from the commands (see above).  To disable menu
 creation, you must let the global variable |quickFontsNoMenu| before this
 plugin is loaded.  For example, to disable the menus, put this line in your
 .vimrc or _vimrc:

@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2003/11/08 22:31:46 $
+" Last Change: $Date: 2004/02/02 17:35:00 $
 " Maintainer: T Scott Urban <tsurban@comcast.net>
-" Version: $Revision: 1.25 $
+" Version: $Revision: 1.26 $
 "
 " For full user info, see quickfonts.txt
 " Key user info:
@@ -197,7 +197,7 @@ function! s:ScriptFinish()
 		let cnt = cnt + 1
 	endwhile
 	let fonts = "#VERSION:2\n#LASTFONT:" . s:selfont . "\n" . fonts
-	if &shell =~ 'csh$'
+	if &shell =~ 'csh'
 		call system ("echo '" . escape (fonts, "\n") .  "' > " . s:file)
 	else
 		call system ("echo '" . fonts .  "' > " . s:file)
