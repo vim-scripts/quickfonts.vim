@@ -1,0 +1,35 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=202
+
+UPDATES 
+ - allow specification of base menu in which to put quickfonts menu (e.g. 'Plugin')
+ - bug fixes and handling of gtk2 style fonts
+
+
+This plugin manages a list of favorite fonts, and allows you to swich quickly between those fonts.  This is useful if you normally like to use several fonts, for example, if your eyes get tired looking at a small font, or someone comes to look at code on your monitor, or your vision is blurry from a night of heavy drinking, you can quickly switch to a larger font, and the go back to a smaller font when the conditions allow it.
+
+All functionality is available through an optional menu or through custom vim commands.
+
+Fonts are read from a file specified with the global variable g:quickFontsFile or the default file $HOME/.vimquickfonts if that variable doesn't eists.  At vim start up, the file is read, if it doesn't exist your list will be empty. If the 'quickFontsAutoLoad' global variable is set (i.e. in your .vimrc), the script will load the last used font upon gvim start-up. On vim quit, your list of favorites is written to the file as well as the quickfont used last.
+
+You can switch between the fonts with the mappings Alt-< and Alt->, which I find useful because they also work in some terminal programs (rxvt/xterm on some systems). You can change the mappings in the plugin if those don't suit you or disable them and add your own if you want (see help file).  The same functionality is available with the commands :QuickFontBigger and :QuickFontSmaller.
+
+You can add a font to your favorites list with the command 
+:QuickFontAdd
+which either takes no argument, in which case the value of 'guifont' will be added if available, or if an argument of '*' is given, the guifont selector is called, if you select a font from that (with no errors) that font will be added to the list.  A full font specification string can also be given as an argument. Duplicate fonts are eliminated, and new fonts are inserted sorted by pixel size in the list. UPDATE - sorting is done on font width * height rather than just width (for unix/Xwindows).  You  can disable this with: 
+"let quickFontsNoXwininfo = 1" in your vimrc.
+
+You can remove a favorite font with the command
+:QuickFontDel
+which with no argument deletes the current selected font from the list, or if you give it a number, it will delete the font at that index in the list.
+
+You can get info on your favorite font list and the currenlty selected font with the command
+:QuickFontInfo
+
+You can reload your font list from your config file (abandoning any changes to the list) with the command
+:QuickFontReload
+
+Finally, you can always edit the config file by hand, in which case, an autocommand will re-read your changes when you write the file.
+
+Caveats: should work with non-X style fonts, except the font sorting.  There are stubs for sorting fonts for other systems - just not filled out - let me know if want to help with that.
+
+
