@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2003/01/25 19:25:14 $
-" Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.21 $
+" Last Change: $Date: 2003/11/08 22:31:46 $
+" Maintainer: T Scott Urban <tsurban@comcast.net>
+" Version: $Revision: 1.25 $
 "
 " For full user info, see quickfonts.txt
 " Key user info:
@@ -14,6 +14,7 @@
 "   g:quickFontsFile         - file to use to read and save font info
 "   g:quickFontsNoMappings   - disable default mappings
 "   g:quickFontsNoMenu       - disable menu creation
+"   g:quickFontsBaseMenu     - use to put QuickFontSet in another menu
 "   g:quickFontsNoXwininfo   - disable calling xininfo (for unix)
 "   g:quickFontsAutoLoad     - auto load last used font on gui startup
 "   g:quickfonts_loaded      - used to avoid multiple loading (read-write)
@@ -37,6 +38,8 @@
 "   fonts are read from the font file at vim start
 "   fonts are written to the font file at vim exit
 "
+" TODO:
+"
 
 " protect from multiple sourcing, but allow it for devel
 if exists("quickfonts_loaded") && ! exists ("quickfonts_debug")
@@ -50,10 +53,11 @@ let quickfonts_loaded = 1
 " s:fna          - font name array, used s:fna{i}
 " s:fnum         - number of fonts in list
 " s:fsa          - font size array, used s:fsa{i}
-" s:fwa          - font width array, used s:fwa{i}
 " s:save         - whether font list has changed, flag to save one exit
 " s:maps         - whether we should create mappings
 " s:menu         - whether we should create/update menus
+" s:mbas         - basename for menus
+" s:mdep         - menu priority string prefix - account for variable depth
 " s:xwin         - whether we should use `xwininfo` for geometry
 " s:scpo         - to restore settings
 " s:selfont      - selected font index
@@ -82,8 +86,22 @@ let tfileUnknown  = $HOME . "/.vimquickfonts"
 let s:file = (exists ("g:quickFontsFile") ? g:quickFontsFile : tfile{s:winsys})
 let s:maps = (exists ("g:quickFontsNoMappings") ? 0 : 1)
 let s:menu = (exists ("g:quickFontsNoMenu") ? 0 : 1)
+let s:mbas = (exists ("g:quickFontsBaseMenu") ? g:quickFontsBaseMenu : '')
 let s:xwin = (exists ("g:quickFontsNoXwininfo") ? 0 : 1)
 let s:auto = (exists ("g:quickFontsAutoLoad") ? 1 : 0)
+
+""" makw sure that if the menu base is specified, it ends with a period
+if strlen (s:mbas) > 0 && strpart (s:mbas, strlen (s:mbas) - 1) != '.'
+	let s:mbas = s:mbas . '.'
+endif
+
+let s:mdep = '.'
+
+let ix = match (s:mbas, '\.')
+while ix != -1
+	let s:mdep = s:mdep . '.'
+	let ix = match (s:mbas, '\.', ix + 1)
+endwhile
 
 unlet tfileWindows tfileXwindows tfileUnknown
 
@@ -138,6 +156,8 @@ function! s:LoadFonts(setfont)
 	if s:menu
 		call s:BuildFontMenus()
 	endif
+
+	let s:save = 0
 endfunction
 
 """ utility to load file into string
@@ -153,15 +173,12 @@ endfunction
 function! s:ReadFonts(str)
 	let fonts = a:str
 	let s:fnum = 0
-	let s:save = 0
 	while strlen (fonts) > 0
 		let curfont = substitute (fonts, "\n.*", "", "")
 		let fonts = substitute (fonts, "[^\n]*\n", "" , "")
 		if curfont != ""
-			let wid_start = match (curfont, ":") + 1
-			let name_start = match (curfont, ":", wid_start) + 1
-			let s:fsa{s:fnum} = strpart (curfont, 0, wid_start - 1)
-			let s:fwa{s:fnum} = strpart (curfont, wid_start, name_start - wid_start - 1)
+			let name_start = match (curfont, ":") + 1
+			let s:fsa{s:fnum} = strpart (curfont, 0, name_start - 1)
 			let s:fna{s:fnum} = strpart (curfont, name_start)
 			let s:fnum = s:fnum + 1
 		endif
@@ -170,13 +187,13 @@ endfunction
 
 "" write fonts to config file
 function! s:ScriptFinish()
-	if s:save == 0 && s:auto == 0
+	if s:save == 0 && (s:auto == 0 || (exists ("s:var_LASTFONT") && s:selfont == s:var_LASTFONT))
 		return
 	endif
 	let fonts = ""
 	let cnt = 0
 	while cnt < s:fnum
-		let fonts = fonts . s:fsa{cnt} . ":" . s:fwa{cnt} . ":" . s:fna{cnt} . "\n"
+		let fonts = fonts . s:fsa{cnt} . ":" . s:fna{cnt} . "\n"
 		let cnt = cnt + 1
 	endwhile
 	let fonts = "#VERSION:2\n#LASTFONT:" . s:selfont . "\n" . fonts
@@ -189,14 +206,16 @@ endfunction
 
 "" list fonts info and selected font
 function! s:QuickFontInfo()
-	echo "num area wid  name"
+	echo "num area name"
 	let cnt = 0
 	while cnt < s:fnum
 		let sel_str = (s:selfont == cnt ? "*" : " ")
-		exec "let cnt_str = substitute (\"  \", ' \\{" . strlen (cnt) . "}$', " . cnt . ", \"\")"
-		exec "let fsa_str = substitute (\"    \", ' \\{" . strlen (s:fsa{cnt}) . "}$', " . s:fsa{cnt} . ", \"\")"
-		exec "let fwa_str = substitute (\"   \", ' \\{" . strlen (s:fwa{cnt}) . "}$', " . s:fwa{cnt} . ", \"\")"
-		echo sel_str . cnt_str . " " . fsa_str . " " . fwa_str . " " s:fna{cnt}
+		"these are for alignment of numbers and text in info
+		exec "let cnt_str = substitute (\"  \", ' \\{" 
+					\ . strlen (cnt) . "}$', " . cnt . ", \"\")"
+		exec "let fsa_str = substitute (\"    \", ' \\{" 
+					\. strlen (s:fsa{cnt}) . "}$', " . s:fsa{cnt} . ", \"\")"
+		echo sel_str . cnt_str . " " . fsa_str . " " . s:fna{cnt}
 		let cnt = cnt + 1
 	endwhile
 endfunction
@@ -222,11 +241,7 @@ function! s:QuickFontAdd(...)
 	endif
 
 	redraw
-	let geom = s:GetGeom{s:winsys} (newfont)
-	let colpos = match (geom, ":")
-	if colpos < 0 | return | endif
-	let area = strpart (geom, 0, colpos)
-	let width = strpart (geom, colpos + 1)
+	let area = s:GetGeom{s:winsys} (newfont)
 
 	let cnt = 0
 	while cnt < s:fnum
@@ -248,14 +263,12 @@ function! s:QuickFontAdd(...)
 	let cnt2 = s:fnum - 1
 	while cnt2 >= cnt
 		let s:fsa{cnt2 + 1} = s:fsa{cnt2}
-		let s:fwa{cnt2 + 1} = s:fwa{cnt2}
 		let s:fna{cnt2 + 1} = s:fna{cnt2}
 		let cnt2 = cnt2 - 1
 	endwhile
 
 	let s:selfont = cnt
 	let s:fsa{cnt} = area
-	let s:fwa{cnt} = width
 	let s:fna{cnt} = newfont
 	let s:fnum = s:fnum + 1
 	let s:save = 1
@@ -282,13 +295,11 @@ function! s:QuickFontDel(...)
 	let cnt = condemned
 	while cnt < s:fnum - 1
 		let s:fsa{cnt} = s:fsa{cnt + 1}
-		let s:fwa{cnt} = s:fwa{cnt + 1}
 		let s:fna{cnt} = s:fna{cnt + 1}
 		let cnt = cnt + 1
 	endwhile
 	let s:fnum = s:fnum - 1
 	exec "unlet s:fsa" . cnt
-	exec "unlet s:fwa" . cnt
 	exec "unlet s:fna" . cnt
 	if condemned == s:selfont && s:fnum > 1
 		let s:selfont = s:selfont - 1
@@ -352,6 +363,7 @@ function! s:GetGeomXwindows(newfont)
 		let temp_title = tempname()
 		set title
 		exec "set titlestring=" . temp_title
+		redraw! " required now to get title to take
 		let geom = system ('xwininfo -name ' . temp_title)
 		" make sure no errors from xwininfo
 		if match (geom, "error") < 0  && match (geom, "Command not found") < 0
@@ -363,7 +375,7 @@ function! s:GetGeomXwindows(newfont)
 			let area = ((geom_h/&lines)*width)
 			let &titlestring = save_ts
 			let &title = save_t
-			return (area . ":" . width)
+			return (area)
 		else
 			" drop through to next method
 			let &titlestring = save_ts
@@ -371,27 +383,21 @@ function! s:GetGeomXwindows(newfont)
 		endif
 	endif
 
-	let width = substitute (a:newfont, '^\(-[^-]*\)\{6\}-', "", "")
-	let width = substitute (width, '-.*', "", "")
+	"TODO
 
-	if width == '*'
-		let width = substitute (a:newfont, '^\(-[^-]*\)\{7\}-', "", "")
-		let width = substitute (width, '-.*', "", "")
-		let width = width / 10
-	endif
 	let area = 0
-	return (area . ":" . width)
+	return (area)
 
 endfunction
 
 "" get MS Windows font geometry (not implemented)
 function! s:GetGeomWindows(newfont)
-	return '0:0'
+	return '0'
 endfunction
 
 ""  get font geometry fall back
 function! s:GetGeomUnknown(newfont)
-	return '0:0'
+	return '0'
 endfunction
 
 function s:QFA_Helper()
@@ -414,24 +420,31 @@ endfunction
 
 " create menus
 if s:menu
-	menu .10 &QuickFonts.&Smaller      :QuickFontSmaller<cr>
-	menu .20 &QuickFonts.&Bigger       :QuickFontBigger<cr>
-	menu .30 &QuickFonts.S&et           :
-	menu .40 &QuickFonts.&Info         :QuickFontInfo<cr>
-	menu .50 &QuickFonts.&Add.&Current :QuickFontAdd<cr>
-	menu     &QuickFonts.&Add.&Specify :QuickFontAdd *<cr>
-	menu .60 &QuickFonts.&Del.&Current :QuickFontDel<cr>
-	menu     &QuickFonts.&Del.&Specify :call <SID>Helper("DELETE: Font Number> ",
-				\ "QuickFontDel")<cr>
-	menu .70 &QuickFonts.&Reload       :QuickFontReload<cr>
+	execute "menu " . s:mdep . "10 " . s:mbas 
+				\ ."&QuickFonts.&Smaller      :QuickFontSmaller<cr>"
+	execute "menu " . s:mdep . "20 " . s:mbas 
+				\ . "&QuickFonts.&Bigger       :QuickFontBigger<cr>"
+	execute "menu " . s:mdep . "40 " . s:mbas 
+				\ . "&QuickFonts.&Info         :QuickFontInfo<cr>"
+	execute "menu " . s:mdep . "50 " . s:mbas 
+				\ . "&QuickFonts.&Add.&Current :QuickFontAdd<cr>"
+	execute "menu     " . s:mbas 
+				\ . "&QuickFonts.&Add.&Specify :QuickFontAdd *<cr>"
+	execute "menu " . s:mdep . "60 " . s:mbas 
+				\ . "&QuickFonts.&Del.&Current :QuickFontDel<cr>"
+	execute "menu     " . s:mbas 
+				\ . "&QuickFonts.&Del.&Specify :call "
+				\ . "<SID>Helper('DELETE: Font Number> ', 'QuickFontDel')<cr>"
+	execute "menu " . s:mdep . "70 " . s:mbas 
+				\ . "&QuickFonts.&Reload       :QuickFontReload<cr>"
 endif
 
 """  utility to build font specific menus
 function! s:BuildFontMenus()
-	unmenu QuickFonts.Set
+	execute "silent! unmenu " . s:mbas . "QuickFonts.Set"
 	let cnt = 0
-	let mencmd1 = "menu .30 &QuickFonts.S&et.&"
-	let mencmd2 = "menu .30 &QuickFonts.S&et.&"
+	let mencmd1 = "menu " . s:mdep . "30 " . s:mbas . "&QuickFonts.S&et.&"
+	let mencmd2 = "menu " . s:mdep . "30 " . s:mbas . "&QuickFonts.S&et.&"
 	while cnt < s:fnum
 		let cmd = ((cnt < 10) ? mencmd1 : mencmd2)
 		let cmd = cmd . cnt . escape(s:fna{cnt}, '. ')

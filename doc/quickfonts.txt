@@ -76,6 +76,17 @@ for creating you own.
 
 Disable creation of menus				*quickFontsNoMenu* 
 
+This is self explanatory.
+
+Build menus as a submenu of another Menu		*quickFontsBaseMenu*
+
+If the plugin uses menus (if they are not turned off with |quickFontsNoMenu|),
+then this variable, if it exists at startup, allows for the creation of the
+"QuickFonts" menu as a sub directory of another menu.  It might be useful to
+set it to 'Plugin" to keep the menu with those belonging to other Menus,
+or it could be set to any other existing or non-existing top-level or sub-menu
+(for example 'Help' of 'Foo.Foo.Foo')
+
 Disable use of xwininfo					*quickFontsNoXwininfo*
 							*quickfonts-xwininfo*
 
