@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2003/01/23 22:21:09 $
+" Last Change: $Date: 2003/01/24 19:15:42 $
 " Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.19 $
+" Version: $Revision: 1.20 $
 "
 " For full user info, see quickfonts.txt
 " Key user info:
@@ -51,7 +51,6 @@ let quickfonts_loaded = 1
 " s:listchanged  - whether list has changed - if 1, list is saved on exit
 " s:noxw         - whether we should not use `xwininfo` for geometry
 " s:save_cpo     - to restore settings
-" s:scriptLoaded - flag to avoid duplicate loading
 " s:selfont      - selected font index
 " s:var_{key}    - font file settings
 " s:winsys       - type of system we'll be dealing with
@@ -82,10 +81,8 @@ let s:auto = (exists ("g:quickFontsAutoLoad") ? 1 : 0)
 unlet tfileWindows tfileXwindows tfileUnknown
 
 """ autocommands
-au VimEnter * call s:ScriptStart (1)
-au GUIEnter * call s:ScriptStart (1)
 au VimLeave * call s:ScriptFinish ()
-execute ("au BufWritePost " . s:file . " call s:ScriptStart (0)")
+execute ("au BufWritePost " . s:file . " call s:LoadFonts (0)")
 
 """ global commands
 command! -n=0 QuickFontInfo :call s:QuickFontInfo()
@@ -94,7 +91,7 @@ command! -n=? QuickFontDel :call s:QuickFontDel(<f-args>)
 command! -n=0 QuickFontBigger :call s:QuickFontBigger()
 command! -n=0 QuickFontSmaller :call s:QuickFontSmaller()
 command! -n=1 QuickFontSet :call s:QuickFontSet(<f-args>)
-command! -n=0 QuickFontReload :call s:ScriptStart(0)
+command! -n=0 QuickFontReload :call s:LoadFonts(0)
 
 """ global mappings
 if !exists ("g:quickFontsNoMappings")
@@ -108,15 +105,11 @@ if !exists ("g:quickFontsNoMappings")
 endif
 
 
-""" init the script, called also to re-read fong file
-function! s:ScriptStart(firsttime)
-	if exists ("s:scriptLoaded")
-		return
-	endif
-	let s:scriptLoaded = 1
-
+""" read or re-read font file
+function! s:LoadFonts(setfont)
 	let strbuf = s:LoadFile (s:file)
 
+	" read header info
 	while strbuf =~ '^#'
 		let curlin = substitute (strbuf, "\n.*", "", "")
 		let strbuf = substitute (strbuf, "[^\n]*\n", "", "")
@@ -126,10 +119,13 @@ function! s:ScriptStart(firsttime)
 		let s:var_{key} = val
 	endwhile
 
+	" read fonts (backward compatible)
 	call s:ReadFonts (strbuf)
 
-	if a:firsttime && s:auto == 1 && exists("s:var_LASTFONT")
-		call s:QuickFontSet (s:var_LASTFONT)
+	if a:setfont > 0
+		let s:selfont = 0
+	elseif s:selfont >= s:fnum
+		let s:selfont = s:fnum - 1
 	endif
 
 endfunction
@@ -147,21 +143,18 @@ endfunction
 function! s:ReadFonts(str)
 	let fonts = a:str
 	let s:fnum = 0
-	let s:selfont = 0
 	let s:listchanged = 0
-	let cnt = 0
 	while strlen (fonts) > 0
 		let curfont = substitute (fonts, "\n.*", "", "")
 		let fonts = substitute (fonts, "[^\n]*\n", "" , "")
 		if curfont != ""
 			let wid_start = match (curfont, ":") + 1
 			let name_start = match (curfont, ":", wid_start) + 1
-			let s:fsa{cnt} = strpart (curfont, 0, wid_start - 1)
-			let s:fwa{cnt} = strpart (curfont, wid_start, name_start - wid_start - 1)
-			let s:fna{cnt} = strpart (curfont, name_start)
+			let s:fsa{s:fnum} = strpart (curfont, 0, wid_start - 1)
+			let s:fwa{s:fnum} = strpart (curfont, wid_start, name_start - wid_start - 1)
+			let s:fna{s:fnum} = strpart (curfont, name_start)
 			let s:fnum = s:fnum + 1
 		endif
-		let cnt = cnt + 1
 	endwhile
 endfunction
 
@@ -383,5 +376,14 @@ endfunction
 function! s:GetGeomUnknown(newfont)
 	return '0:0'
 endfunction
+
+" first time load
+call s:LoadFonts (1)
+if s:auto == 1 && exists("s:var_LASTFONT")
+	if s:var_LASTFONT >= 0 && s:var_LASTFONT < s:fnum
+		let s:selfont = s:var_LASTFONT
+		execute "set guifont=" . escape (s:fna{s:selfont}, " ")
+	endif
+endif
 
 let &cpo = s:save_cpo " restore vim settings
