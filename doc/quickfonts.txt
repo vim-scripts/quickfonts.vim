@@ -1,0 +1,171 @@
+*quickfonts.txt*	Favorite Font Manager		February 7, 2002
+
+Authors:  T. Scott Urban  <tsurban@HORMELattbi.com>
+
+	  (remove HORMEL from my email first)
+
+0. DESCRIPTION						*quickfonts*
+
+This plugin manages a list of favorite fonts, and allows you to swich quickly
+between those fonts.  This is useful if you normally like to use several
+fonts, for example, if your eyes get tired looking at a small font, or someone
+comes to look at code on your monitor, or your vision is blurry from a night
+of heavy drinking, you can quickly switch to a larger font, and the go back to
+a smaller font when the conditions allow it.
+
+Fonts are read from a file specified with the global variable g:quickFontsFile
+or the default file $HOME/.vimquickfonts if that variable doesn't eists.  At
+vim start up, the file is read, if it doesn't exist your list will be empty.
+On vim quit, your list of favorites is written to the file.  Commands are
+supplied to completely manage this font list, but you can also edit the font
+list with vim, in which case, when you save, your list will automatically be
+reloaded from the saved file.
+
+==============================================================================
+1. CONTENTS						*quickfonts-contents*
+
+	0. DESCRIPTION ..................: |quickfonts|
+	1. CONTENTS......................: |quickfonts-contents|
+	2. QUICKFONTS INSTALLATION ......: |quickfonts-install|
+	3. QUICKFONTS CONFIGURATION ......:|quickfonts-config|
+	4. QuickFonts Usage..............: |quickfonts-usage|
+	     SWITCHING FONTS ............: |quickfonts-switching|
+	     FONTS INFORMATION ..........: |quickfonts-info|
+	     ADDING A FONT ..............: |quickfonts-add|
+	     DELETING A FONT ............: |quickfonts-delete|
+	     RELOADING THE LIST .........: |quickfonts-reload|
+
+==============================================================================
+2. QUICKFONTS INSTALLATION				*quickfonts-install*
+
+To install, un-gzip the package, then untar in your $HOME/.vim or $VIMRUNTIME
+directory.
+
+==============================================================================
+3. QUICKFONTS CONFIGURATION				*quickfonts-config*
+
+There are two configuration variables available with this plugin:
+
+Favorite font file					*quickFontsFile*
+
+Set this variable in your vimrc to the file path and name of the file where
+you want to store your favorite fonts.  If this variable isn't set, the
+default font file locatin is "$HOME/_vimquickfonts" on Windows machines and
+"$HOME/.vimquickfonts" otherwise.  If you are a Windows user and you don't
+want to have this file saved at C:_vimquickfonts, make sure you have a $HOME
+environment variable or use the 'quickFontsFile' variable to sepecify another
+file.
+
+Disable use of xwininfo					*quickFontsNoXwininfo*
+							*quickfonts-xwininfo*
+
+On X-based systems (Unix and others), the fonts are sorted with the help of
+the external program 'xwininfo'.  This allows the font height and width to be
+calculated, and is used because of I know of know way to do it entirely within
+vim.  If you don't want this program to be called, and instead would rather
+just sort on the font width (much less pleasing results, IMHO), you can define
+this variable in your vimrc to disable this feature.  Reasons you might want
+to do this include the fact this system call can be slow on some systems, or
+might not even be available on others.
+
+==============================================================================
+4. QuickFonts Usage					*quickfonts-usage*
+
+SWITCHING FONTS						*quickfonts-switching*
+							*QuickFontSmaller*
+							*QuickFontBigger*
+
+Switching to the next smaller font (or just the previous one if they aren't
+sorted) can be acheived with the command:
+
+:QuickFontSmaller
+
+or the mapping
+
+Alt-< - that is, hold the Alt-key, the Shift-key, and press the ,/< key
+
+Switching to the next bigger font (or just the previous one if they aren't
+sorted) can be acheived with the command:
+
+:QuickFontBigger
+
+or the mapping
+
+Alt-> - that is, hold the Alt-key, the Shift-key, and press the ,/< key
+
+You can make your own mappings like this:
+
+map <keys> :QuickFontBigger<CR>
+
+Attempts to switch to a font off either end of the list will result in a
+warning.
+
+FONTS INFORMATION					*quickfonts-info*
+
+You can get information about your current Favorite Fonts with the command:
+
+:QuickFontInfo
+
+Which will produce output similar to this (depending on your system):
+
+num area wid  name
+* 0  136   8  -sony-fixed-medium-r-normal-*-*-120-*-*-c-*-jisx0201.1976-0
+  1  300  12  -sony-fixed-medium-r-normal-*-*-170-*-*-c-*-jisx0201.1976-0
+  2  375  15  -adobe-courier-medium-r-normal-*-*-240-*-*-m-*-iso8859-9
+  3 1710  30  -adobe-courier-medium-r-normal-*-*-360-*-*-m-*-iso8859-9
+
+The * in the first column indicates which font is the selected font.  The next
+two fields are for character area and width in pixels.  This information is
+used for sorting the list, if implemented for your system. The last field is
+the font name.
+
+ADDING A FONT						*quickfonts-add*
+							*QuickFontAdd*
+
+You can add a font to your favorites list with the command:
+
+:QuickFontAdd *
+
+or
+
+:QuickFontAdd
+
+The first form opens the gui font selection dialog (if available for your
+gui). Once you select a font from there, and there are no errors, that font
+will be added to the list.
+
+The second form adds the current value of the |'guifont'| setting.  If this is
+setting is empty or '*', you won't add anything.  In that case, you can use
+the first form or set your 'guifont' independently with ":set guifont=*", for
+example.
+
+DELETING A FONT						*quickfonts-delete*
+							*QuickFontDel*
+
+You can delete a font with the command:
+
+:QuickFontDel
+
+or
+
+:QuickFontDel <num>
+
+The first form deletes the currently selected font.
+
+The second form deletes the font with index given by the single argument.
+
+Range is checked on this command, and if you delete the currently selected
+font via either method, the previous font in your list will then be selected.
+
+RELOADING THE LIST					*quickfonts-reload*
+							*QuickFontReload*
+
+If you make changes to your font list that you don't want to save your font
+list file, you can use the command:
+
+:QuickFontReload
+
+To reload the file, discard your changes, and ensure the file won't be
+overwritten.
+
+vim:tw=78:ts=8:ft=help

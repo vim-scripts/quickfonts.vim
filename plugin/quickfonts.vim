@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2002/02/08 00:01:58 $
+" Last Change: $Date: 2002/02/08 01:44:38 $
 " Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.13 $
+" Version: $Revision: 1.14 $
 
 if exists("quickfonts_loaded") && ! exists ("quickfonts_debug")
 	finish
@@ -17,7 +17,11 @@ set cpo&vim
 if exists ("g:quickFontsFile")
 	let s:fontfile = g:quickFontsFile
 else
-	let s:fontfile = $HOME . "/.vimquickfonts"
+	if has("gui_win32") || has ("gui_win32s")
+		let s:fontfile = $HOME . "/_vimquickfonts"
+	else
+		let s:fontfile = $HOME . "/.vimquickfonts"
+	endif
 endif
 
 " quickFontsNoXwininfo -  var to turn off calling of xwininfo (for X systems)
@@ -148,7 +152,8 @@ function! s:QuickFontAdd(...)
 			return
 		endif
 
-		if area <= s:fsa{cnt}
+		"echo "cnt " . cnt . " area " . area . " fsa{cnt} " . s:fsa{cnt}
+		if (area + 0) <= (s:fsa{cnt} + 0)
 			break
 		endif
 		let cnt = cnt + 1
@@ -235,39 +240,50 @@ endfunction
 
 "" s:GetGeomXwindows - get X windows font geometry
 function! s:GetGeomXwindows(newfont)
-	if s:no_xinwinfo == 1
-		let width = substitute (a:newfont, '^\(-[^-]*\)\{6\}-', "", "")
-		let width = substitute (width, '-.*', "", "")
-
-		if width == '*'
-			let width = substitute (a:newfont, '^\(-[^-]*\)\{7\}-', "", "")
-			let width = substitute (width, '-.*', "", "")
-			let width = width / 10
-		endif
-		let area = 0
-	else
+	if s:no_xinwinfo == 0
 		let save_ts = &titlestring
 		let save_t = &title
 		let temp_title = tempname()
 		set title
 		exec "set titlestring=" . temp_title
 		let geom = system ('xwininfo -name ' . temp_title)
-		let geom_w = substitute (geom, '.*Width: ', "", "")
-		let geom_w = substitute (geom_w, '[^0-9].*', "", "")
-		let geom_h = substitute (geom, '.*Height: ', "", "")
-		let geom_h = substitute (geom_h, '[^0-9].*', "", "")
-		let width = (geom_w/&columns)
-		let area = ((geom_h/&lines)*width)
-		let &titlestring = save_ts
-		let &title = save_t
+		" make sure no errors from xwininfo
+		if match (geom, "error") < 0  && match (geom, "Command not found") < 0
+			let geom_w = substitute (geom, '.*Width: ', "", "")
+			let geom_w = substitute (geom_w, '[^0-9].*', "", "")
+			let geom_h = substitute (geom, '.*Height: ', "", "")
+			let geom_h = substitute (geom_h, '[^0-9].*', "", "")
+			let width = (geom_w/&columns)
+			let area = ((geom_h/&lines)*width)
+			let &titlestring = save_ts
+			let &title = save_t
+			return (area . ":" . width)
+		else
+			" drop through to next method
+			let &titlestring = save_ts
+			let &title = save_t
+		endif
 	endif
+
+	let width = substitute (a:newfont, '^\(-[^-]*\)\{6\}-', "", "")
+	let width = substitute (width, '-.*', "", "")
+
+	if width == '*'
+		let width = substitute (a:newfont, '^\(-[^-]*\)\{7\}-', "", "")
+		let width = substitute (width, '-.*', "", "")
+		let width = width / 10
+	endif
+	let area = 0
 	return (area . ":" . width)
+
 endfunction
 
+"" s:GetGeomWindows - get MS Windows font geometry
 function! s:GetGeomWindows(newfont)
 	return '0:0'
 endfunction
 
+"" s:GetGeomUnknown - get font geometry fall back
 function! s:GetGeomUnknown(newfont)
 	return '0:0'
 endfunction
