@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2004/02/02 17:35:00 $
+" Last Change: $Date: 2004/02/03 18:39:54 $
 " Maintainer: T Scott Urban <tsurban@comcast.net>
-" Version: $Revision: 1.26 $
+" Version: $Revision: 1.27 $
 "
 " For full user info, see quickfonts.txt
 " Key user info:
@@ -365,6 +365,8 @@ function! s:GetGeomXwindows(newfont)
 		exec "set titlestring=" . temp_title
 		redraw! " required now to get title to take
 		let geom = system ('xwininfo -name ' . temp_title)
+		" save and swith ignorecase setting becasue it affects substitute()
+		let save_ic = &ignorecase | set noignorecase
 		" make sure no errors from xwininfo
 		if match (geom, "error") < 0  && match (geom, "Command not found") < 0
 			let geom_w = substitute (geom, '.*Width: ', "", "")
@@ -375,12 +377,14 @@ function! s:GetGeomXwindows(newfont)
 			let area = ((geom_h/&lines)*width)
 			let &titlestring = save_ts
 			let &title = save_t
+			let &ignorecase = save_ic
 			return (area)
 		else
 			" drop through to next method
 			let &titlestring = save_ts
 			let &title = save_t
 		endif
+		let &ignorecase = save_ic
 	endif
 
 	"TODO
