@@ -27,8 +27,8 @@ reloaded from the saved file.
 	0. DESCRIPTION ..................: |quickfonts|
 	1. CONTENTS......................: |quickfonts-contents|
 	2. QUICKFONTS INSTALLATION ......: |quickfonts-install|
-	3. QUICKFONTS CONFIGURATION ......:|quickfonts-config|
-	4. QuickFonts Usage..............: |quickfonts-usage|
+	3. QUICKFONTS CONFIGURATION .....: |quickfonts-config|
+	4. QUICKFONTS USAGE..............: |quickfonts-usage|
 	     SWITCHING FONTS ............: |quickfonts-switching|
 	     FONTS INFORMATION ..........: |quickfonts-info|
 	     ADDING A FONT ..............: |quickfonts-add|
@@ -69,11 +69,12 @@ to do this include the fact this system call can be slow on some systems, or
 might not even be available on others.
 
 ==============================================================================
-4. QuickFonts Usage					*quickfonts-usage*
+4. QUICKFONTS USAGE					*quickfonts-usage*
 
 SWITCHING FONTS						*quickfonts-switching*
 							*QuickFontSmaller*
 							*QuickFontBigger*
+							*QuickFontSet*
 
 Switching to the next smaller font (or just the previous one if they aren't
 sorted) can be acheived with the command:
@@ -97,8 +98,19 @@ You can make your own mappings like this:
 
 map <keys> :QuickFontBigger<CR>
 
+Switching to a particular font (with index number) can be acheived with this
+command:
+
+:QuickFontSet <number>
+
+This is best used directly after a :QuickFontInfo command while the output is
+still on the screen.
+
 Attempts to switch to a font off either end of the list will result in a
 warning.
+
+
+
 
 FONTS INFORMATION					*quickfonts-info*
 

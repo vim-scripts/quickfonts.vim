@@ -1,7 +1,7 @@
 " Vim global plugin for quickly switching between a list of favorite fonts
-" Last Change: $Date: 2002/02/08 01:44:38 $
+" Last Change: $Date: 2002/04/19 19:07:57 $
 " Maintainer: T Scott Urban <tsurban@attbi.com>
-" Version: $Revision: 1.14 $
+" Version: $Revision: 1.16 $
 
 if exists("quickfonts_loaded") && ! exists ("quickfonts_debug")
 	finish
@@ -56,6 +56,7 @@ command! -n=? QuickFontAdd :call s:QuickFontAdd(<f-args>)
 command! -n=? QuickFontDel :call s:QuickFontDel(<f-args>)
 command! -n=0 QuickFontBigger :call s:QuickFontBigger()
 command! -n=0 QuickFontSmaller :call s:QuickFontSmaller()
+command! -n=1 QuickFontSet :call s:QuickFontSet(<f-args>)
 command! -n=0 QuickFontReload :call s:ReadFonts()
 
 """ global mappings
@@ -104,7 +105,11 @@ function! s:WriteFonts()
 		let fonts = fonts . s:fsa{cnt} . ":" . s:fwa{cnt} . ":" . s:fna{cnt} . "\n"
 		let cnt = cnt + 1
 	endwhile
-	call system ("echo '" . escape (fonts, "\n") .  "' > " . s:fontfile)
+	if &shell =~ 'csh$'
+		call system ("echo '" . escape (fonts, "\n") .  "' > " . s:fontfile)
+	else
+		call system ("echo '" . fonts .  "' > " . s:fontfile)
+	endif
 endfunction
 
 "" s:QuickFontInfo - list quick fonts info
@@ -238,6 +243,19 @@ function! s:QuickFontSmaller()
 	echo "QuickFontBigger: " . newfont
 endfunction
 
+"" s:QuickFontSet - switch to specific font - usefule after QuickFontInfo
+function! s:QuickFontSet(fn)
+	if a:fn < 0 || a:fn >= s:fnum
+		echo "QuickFont: invalid font number - see :QuickFontInfo"
+		return
+	endif
+
+	let newfont = s:fna{a:fn}
+  execute "set guifont=" . escape (newfont, " ")
+	redraw
+	echo "QuickFontSet: " . newfont
+endfunction
+	
 "" s:GetGeomXwindows - get X windows font geometry
 function! s:GetGeomXwindows(newfont)
 	if s:no_xinwinfo == 0
