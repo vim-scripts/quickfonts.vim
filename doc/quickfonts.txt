@@ -1,6 +1,6 @@
 *quickfonts.txt*	Favorite Font Manager		February 7, 2002
 
-Authors:  T. Scott Urban  <tsurban@HORMELattbi.com>
+Authors:  T. Scott Urban  <tsurban@HORMELcomcast.net>
 
 	  (remove HORMEL from my email first)
 
